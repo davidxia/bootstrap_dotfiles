@@ -1,6 +1,6 @@
 #/bin/bash
 
-# bash -c "$(curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/bootstrap_dotfiles.sh)"
+# bash -c "$(curl -fsSL https://raw.github.com/tranzfuse/bootstrap_dotfiles/master/bootstrap_dotfiles.sh)"
 
 # Debian package dependencies:
 # build-essential - for GCC, GNU Make, etc.
@@ -134,8 +134,8 @@ configure_git() {
         echo_with_color "~/.git-config directory already exists. Moving to ~/.git-config.bak" "blue"
         rm -fr ~/.git-config.bak && mv ~/.git-config ~/.git-config.bak
     fi
-    echo_with_color "Cloning David Xia's git-config\n" "blue"
-    git clone https://github.com/davidxia/git-config.git ~/.git-config
+    echo_with_color "Cloning Adam Smith's git-config\n" "blue"
+    git clone https://github.com/tranzfuse/git-config.git ~/.git-config
 
     echo_with_color "\nChecking if ~/.gitconfig exists..." "blue"
     if [[ -e ~/.gitconfig ]]; then
