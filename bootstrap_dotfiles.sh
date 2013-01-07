@@ -106,6 +106,19 @@ function configure_zsh {
 }
 
 
+function configure_tmux {
+    echo_with_color "\nChecking if ~/.tmux.conf exists..." "blue"
+    if [ -e ~/.tmux.conf ]; then
+        echo_with_color "~/.tmux.conf already exists. Moving to ~/.tmux.conf.bak" "blue"
+        rm -fr ~/.tmux.conf.bak && mv ~/.tmux.conf ~/.tmux.conf.bak
+    fi
+    echo_with_color "Cloning David Xia's tmux conf\n" "blue"
+    git clone https://github.com/davidxia/tmux-conf.git ~/.tmux-conf
+    echo_with_color "Creating symlink ~/.tmux.conf -> ~/.tmux-conf/tmux.conf\n" "blue"
+    ln -s ~/.tmux-conf/tmux.conf ~/.tmux.conf
+}
+
+
 function configure_vim {
     echo_with_color "Checking if ~/.vim exists..." "blue"
     if [ -d ~/.vim ]; then
@@ -190,6 +203,7 @@ configure_vim
 configure_git
 configure_autojump
 configure_zsh
+configure_tmux
 install_pip
 install_pip_packages
 configure_virtualenvwrapper
