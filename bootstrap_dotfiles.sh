@@ -1,209 +1,331 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+#
 # bash -c "$(curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/bootstrap_dotfiles.sh)"
-
-# Debian package dependencies:
+#
+#
+# Aptitude packages:
+# autojump - fast directory navigation
 # build-essential - for GCC, GNU Make, etc.
 # curl - obviously
 # exuberant-ctags - for Vim Tagbar
 # git - obviously
-# tmux - obviously
-# vim-nox - Vim with python and ruby support
-# zsh - obviously
-
-# PIP dependencies:
-# distribute, pip
-# ipython, virtualenv
-
-
-BREWS="ack autojump cmatrix ctags homebrew/dupes/vim wget"
-DEB_PKGS="autojump build-essential curl exuberant-ctags git tmux vim-nox zsh"
-LUCID_PKGS="build-essential curl exuberant-ctags git-core zsh"
-PIP_PKGS="ipython virtualenv virtualenvwrapper"
-SUDO="sudo"
+# tmux - terminal multiplexer
+# vim-nox - Vim compiled with support for scripting with Perl, Python, Ruby, and Tcl
+# zsh - best shell evar
+#
+#
+# Homebrew packages:
+#
+#
+#
+# Pip packges:
+# ipython -
+# virtualenv -
 
 
-function die {
-    echo "Error: $1"
+aptitude="aptitude"
+squeezePkgs="build-essential curl exuberant-ctags git tmux vim-nox zsh"
+precisePkgs="autojump build-essential curl exuberant-ctags git tmux vim-nox zsh"
+brews="ack autojump cmatrix cowsay ctags fortune mercurial vim wget"
+
+
+scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+
+function cecho() {
+    case "${2}" in
+        red) code=31;;
+        green) code=32;;
+        yellow) code=33;;
+        blue) code=34;;
+        purple) code=35;;
+        cyan) code=36;;
+        white) code=37;;
+        *) code=1;;
+    esac
+    printf "\n\e[0;${code}m${1}\e[0m\n"
+}
+
+
+function notify() {
+    cecho "${1}" cyan
+    sleep 1
+}
+
+
+function ask() {
+    cecho "${1}" yellow
+}
+
+
+function pause() {
+    read -p "$*"
+}
+
+
+function error() {
+    cecho "${1}" red
+    sleep 1
+}
+
+
+function die() {
+    cecho "Error: ${1}" red
     exit 1
 }
 
 
-function echo_with_color {
-    case $2 in
-        blue)
-            echo -e "\033[0;34m$1\033[0m"
-            ;;
-        *)
-            echo -e $1
-            ;;
-    esac
+function backup() {
+    for arg in "$@"; do
+        if [ -e ${arg} -o -h ${arg} ]; then
+            notify "Backing up existing ${arg} to ${arg}.bak"
+            rm -fr ${arg}.bak && mv ${arg} ${arg}.bak
+        fi
+        sleep 1
+    done
 }
 
 
-function install_apt_pkgs {
-    echo "Installing aptitude packages: "
+function askYesNo() {
+    ask "Do you want to ${1} ${2}?"
+    select ynq in "yes" "no" "quit"; do
+        case ${ynq} in
+            yes) shouldInstall=true; break;;
+            no) shouldInstall=false; break;;
+            quit) exit;;
+        esac
+    done
+}
 
-    DISTRO=$(lsb_release --codename --short)
-    case ${DISTRO} in
-        squeeze)
-            APTITUDE="aptitude -t squeeze-backports"
-            PKGS=${DEB_PKGS}
-            ;;
-        precise)
-            APTITUDE="aptitude"
 
-            # personal system, make /usr/local personal and bypass sudo
-            SUDO=""
-            sudo mv /usr/local /usr/local.orig
-            sudo mkdir /usr/local
-            sudo chown $(whoami):$(groups | awk '{print $1}') /usr/local
-            PKGS=${DEB_PKGS}
-            ;;
-        lucid)
-            APTITUDE="aptitude"
-            PKGS=${LUCID_PKGS}
-            ;;
-        *)
-            die "unsupported distribution: ${DISTRO}"
-            ;;
+function aptInstall() {
+    case "${1}" in
+        precise) aptPkgs="${precisePkgs}";;
+        squeeze) aptPkgs="${squeezePkgs}";;
+        *) ;;
     esac
 
-    echo -e "${PKGS}\n"
-    sudo ${APTITUDE} install ${PKGS}
+    askYesNo "install" "aptitude packages: ${aptPkgs}"
+    if ${shouldInstall}; then
+        ask "We'll need your password:"
+        sudo ${aptitude} install ${aptPkgs}
 
-    # custom fonts for vim-powerline
-    if [ "${DISTRO}" = "precise" ]; then
-        mkdir -p .fonts
-        cd .fonts
-        git clone https://github.com/scotu/ubuntu-mono-powerline.git
-        cd ..
+        if [ "${1}" == "precise" ]; then
+            notify "Downloading the patched Monaco font for zsh's powerline theme"
+            mkdir ~/.fonts && git clone https://github.com/scotu/ubuntu-mono-powerline.git ~/.fonts/
+        fi
     fi
+
+    configureAutojump
 }
 
 
-function install_homebrew {
-    echo_with_color "Checking if homebrew is already installed..." "blue"
-    if [ -x /usr/local/bin/brew ]; then
-        echo_with_color "Homebrew is already installed, skipping installation\n" "blue"
+function installHomebrew() {
+    if [ ! -x /usr/local/bin/brew ]; then
+        askYesNo "install" "Homebrew"
+        if ${shouldInstall}; then
+            printf "\n"
+            printf "\e[0;32m"'    __  __                     __                     '"\e[0m\n"
+            printf "\e[0;32m"'   / / / /___  ____ ___  ___  / /_  ________ _      __'"\e[0m\n"
+            printf "\e[0;32m"'  / /_/ / __ \/ __ `__ \/ _ \/ __ \/ ___/ _ \ | /| / /'"\e[0m\n"
+            printf "\e[0;32m"' / __  / /_/ / / / / / /  __/ /_/ / /  /  __/ |/ |/ / '"\e[0m\n"
+            printf "\e[0;32m"'/_/ /_/\____/_/ /_/ /_/\___/_.___/_/   \___/|__/|__/  '"\e[0m\n\n"
+
+            notify "Installing Homebrew"
+            ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)
+        fi
     else
-        echo_with_color "Installing homebrew\n" "blue"
-        ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)
+        notify "Updating Homebrew and formulae"
+        brew update
     fi
 }
 
 
-function install_brew_pkgs {
-    echo_with_color "Installing homebrew packages: ${BREWS}\n" "blue"
-    [ -x /usr/local/bin/brew ] && brew tap homebrew/dupes && brew install ${BREWS}
-}
+function installBrews() {
+    if brewLoc="$(which brew)" && [ ! -z "${brewLoc}" ]; then
+        installedBrews=$(brew list)
+        missingBrews=""
 
+        # Create string of missing Homebrew formulae
+        for formula in ${brews}; do
+            test "${installedBrews#*$formula}" == "${installedBrews}" && ${missingBrews}="${missingBrews} ${formula}"
+        done
 
-function configure_zsh {
-    echo_with_color "Making zsh default shell and cloning David Xia's oh-my-zsh\n" "blue"
-    curl -L https://github.com/davidxia/oh-my-zsh/raw/master/tools/install.sh | sh
-    /bin/zsh && source ~/.zshrc
-}
+        if [ ! "${missingBrews}" == "" ]; then
+            askYesNo "install" "Homebrew packages: ${missingBrews}"
+            if ${shouldInstall}; then
+                brew install ${missingBrews}
+            fi
+        fi
 
-
-function configure_tmux {
-    echo_with_color "\nChecking if ~/.tmux.conf exists..." "blue"
-    if [ -e ~/.tmux.conf ]; then
-        echo_with_color "~/.tmux.conf already exists. Moving to ~/.tmux.conf.bak" "blue"
-        rm -fr ~/.tmux.conf.bak && mv ~/.tmux.conf ~/.tmux.conf.bak
+        configureAutojump
+    else
+        error "${brewLoc} is not executable"
     fi
-    echo_with_color "Cloning David Xia's tmux conf\n" "blue"
-    git clone https://github.com/davidxia/tmux-conf.git ~/.tmux-conf
-    echo_with_color "Creating symlink ~/.tmux.conf -> ~/.tmux-conf/tmux.conf\n" "blue"
-    ln -s ~/.tmux-conf/tmux.conf ~/.tmux.conf
 }
 
 
-function configure_vim {
-    echo_with_color "Checking if ~/.vim exists..." "blue"
-    if [ -d ~/.vim ]; then
-        echo_with_color "~/.vim directory already exists. Moving to ~/.vim.bak" "blue"
-        rm -fr ~/.vim.bak && mv ~/.vim ~/.vim.bak
+function configureZsh() {
+    askYesNo "install" "oh-my-zsh"
+    if ${shouldInstall}; then
+        notify "Installing oh-my-zsh!"
+        bash -c "$(curl -fsSL https://github.com/davidxia/oh-my-zsh/raw/master/tools/install.sh)"
     fi
-    echo_with_color "Cloning David Xia's vim-config and installing Vundle as submodule\n" "blue"
-    git clone https://github.com/davidxia/vim-config.git ~/.vim
-    cd ~/.vim && git submodule update --init bundle/vundle && cd ~
-    vim -u bundles.vim +BundleInstall +q
+}
 
-    echo_with_color "\nChecking if ~/.vimrc exists..." "blue"
-    if [ -e ~/.vimrc ]; then
-        echo_with_color "~/.vimrc already exists. Moving to ~/.vimrc.bak" "blue"
-        rm -fr ~/.vim.bak && mv ~/.vimrc ~/.vimrc.bak
+
+function configureTmux() {
+    askYesNo "configure" "tmux"
+    if ${shouldInstall}; then
+        printf "\n"
+        printf "\e[0;32m"'   __                                       '"\e[0m\n"
+        printf "\e[0;32m"'  /  |                                      '"\e[0m\n"
+        printf "\e[0;32m"' _$$ |_    _____  ____   __    __  __    __ '"\e[0m\n"
+        printf "\e[0;32m"'/ $$   |  /     \/    \ /  |  /  |/  \  /  |'"\e[0m\n"
+        printf "\e[0;32m"'$$$$$$/   $$$$$$ $$$$  |$$ |  $$ |$$  \/$$/ '"\e[0m\n"
+        printf "\e[0;32m"'  $$ | __ $$ | $$ | $$ |$$ |  $$ | $$  $$<  '"\e[0m\n"
+        printf "\e[0;32m"'  $$ |/  |$$ | $$ | $$ |$$ \__$$ | /$$$$  \ '"\e[0m\n"
+        printf "\e[0;32m"'  $$  $$/ $$ | $$ | $$ |$$    $$/ /$$/ $$  |'"\e[0m\n"
+        printf "\e[0;32m"'   $$$$/  $$/  $$/  $$/  $$$$$$/  $$/   $$/ '"\e[0m\n\n"
+
+        backup ~/.tmux.conf ~/.tmux-conf
+        notify "Cloning David Xia's tmux conf and symlinking ~/.tmux.conf -> ~/.tmux-conf/tmux.conf"
+        git clone https://github.com/davidxia/tmux-conf.git ~/.tmux-conf && \
+            ln -s ~/.tmux-conf/tmux.conf ~/.tmux.conf
     fi
-    echo_with_color "Creating symlink ~/.vimrc -> ~/.vim/vimrc\n" "blue"
-    ln -s ~/.vim/vimrc ~/.vimrc
 }
 
 
-function configure_git {
-    echo_with_color "Checking if ~/.git-config exists..." "blue"
-    if [ -d ~/.git-config ]; then
-        echo_with_color "~/.git-config directory already exists. Moving to ~/.git-config.bak" "blue"
-        rm -fr ~/.git-config.bak && mv ~/.git-config ~/.git-config.bak
+function configureVim() {
+    askYesNo "configure" "vim"
+    if ${shouldInstall}; then
+        backup ~/.vim ~/.vimrc
+
+        notify "Cloning David Xia's Vim config and symlinking ~/.vimrc -> ~/.vim/vimrc"
+        git clone https://github.com/davidxia/vim-config.git ~/.vim && \
+            cd ~/.vim && git submodule update --init bundle/vundle && cd ~ && \
+            vim -u ~/.vim/bundles.vim +BundleInstall +qall && ln -s ~/.vim/vimrc ~/.vimrc
     fi
-    echo_with_color "Cloning David Xia's git-config\n" "blue"
-    git clone https://github.com/davidxia/git-config.git ~/.git-config
+}
 
-    echo_with_color "\nChecking if ~/.gitconfig exists..." "blue"
-    if [ -e ~/.gitconfig ]; then
-        echo_with_color "~/.gitconfig already exists. Moving to ~/.gitconfig.bak" "blue"
-        rm -fr ~/.gitconfig.bak && mv ~/.gitconfig ~/.gitconfig.bak
+
+function configureGit() {
+    askYesNo "configure" "git"
+    if ${shouldInstall}; then
+        printf "\n"
+        printf "\e[0;32m"'        _ _   '"\e[0m\n"
+        printf "\e[0;32m"'       (_) |  '"\e[0m\n"
+        printf "\e[0;32m"'   __ _ _| |_ '"\e[0m\n"
+        printf "\e[0;32m"'  / _` | | __|'"\e[0m\n"
+        printf "\e[0;32m"' | (_| | | |_ '"\e[0m\n"
+        printf "\e[0;32m"'  \__, |_|\__|'"\e[0m\n"
+        printf "\e[0;32m"'   __/ |      '"\e[0m\n"
+        printf "\e[0;32m"'  |___/       '"\e[0m\n\n"
+
+        backup ~/.git-config ~/.gitconfig ~/.gitignore_global
+
+        notify "Cloning David Xia's git-config"
+        notify "Symlinking ~/.gitconfig -> ~/.git-config/gitconfig"
+        notify "Symlinking ~/.gitignore_global -> ~/.git-config/gitignore_global"
+
+        git clone https://github.com/davidxia/git-config.git ~/.git-config && \
+            ln -s ~/.git-config/gitconfig ~/.gitconfig && \
+            ln -s ~/.git-config/gitignore_global ~/.gitignore_global
+
+        ask "Setting up git config\nWhat's your name?"
+        read git_name
+        git config --global user.name "${git_name}"
+        ask "What's your email?"
+        read git_email
+        git config --global user.email "${git_email}"
+        git config --list
+        pause "Here's your global git config. You can edit this later anytime. Press [Enter] key to continue."
     fi
-    echo_with_color "Creating symlink ~/.gitconfig -> ~/.git-config/gitconfig\n" "blue"
-    ln -s ~/.git-config/gitconfig ~/.gitconfig
+}
 
-    echo_with_color "Checking if ~/.gitignore_global exists..." "blue"
-    if [ -e ~/.gitignore_global ]; then
-        echo_with_color "~/.gitignore_global already exists. Moving to ~/.gitignore_global.bak" "blue"
-        mv ~/.gitignore_global ~/.gitignore_global.bak
+
+function configureAutojump() {
+    askYesNo "configure" "autojump"
+    if ${shouldInstall}; then
+        notify "Configuring autojump"
+        if [ "$(uname -s)" == "Darwin" ]; then
+            echo "[ -f $(brew --prefix)/etc/autojump ] && . $(brew --prefix)/etc/autojump" \
+                > ~/.oh-my-zsh/custom/autojump.zsh
+        fi
     fi
-    echo_with_color "Creating symlink ~/.gitignore_global -> ~/.git-config/gitignore_global\n" "blue"
-    ln -s ~/.git-config/gitignore_global ~/.gitignore_global
 }
 
 
-function configure_autojump {
-    echo_with_color "\nConfiguring autojump" "blue"
-    echo "if [ -f $(brew --prefix)/etc/autojump ]; then
-              . $(brew --prefix)/etc/autojump
-          fi" > ~/.oh-my-zsh/custom/autojump.zsh
+function installPip() {
+    if ! pip_loc="$(which pip)" || [ -z "${pip_loc}" ]; then
+        askYesNo "install" "python distribute and pip"
+        if ${shouldInstall}; then
+            printf "\n"
+            printf "\e[0;32m"'        _       '"\e[0m\n"
+            printf "\e[0;32m"'       (_)      '"\e[0m\n"
+            printf "\e[0;32m"'  _ __  _ _ __  '"\e[0m\n"
+            printf "\e[0;32m"' | |_ \| | |_ \ '"\e[0m\n"
+            printf "\e[0;32m"' | |_) | | |_) |'"\e[0m\n"
+            printf "\e[0;32m"' | .__/|_| .__/ '"\e[0m\n"
+            printf "\e[0;32m"' | |     | |    '"\e[0m\n"
+            printf "\e[0;32m"' |_|     |_|    '"\e[0m\n\n"
+
+            notify "Installing python distribute and pip"
+            curl http://python-distribute.org/distribute_setup.py | sudo python
+            curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | sudo python
+        fi
+    fi
 }
 
 
-function install_pip {
-    echo_with_color "\nInstalling python distribute and pip" "blue"
-    curl http://python-distribute.org/distribute_setup.py | ${SUDO} python
-    curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | ${SUDO} python
+function installPipPkgs() {
+    pipPkgs="ipython virtualenv virtualenvwrapper"
+
+    askYesNo "install" "pip packages: ${pipPkgs}"
+    if ${shouldInstall}; then
+        if pipLoc="$(which pip)" && [ ! -z "${pipLoc}" ]; then
+            notify "Installing pip packages: ${pipPkgs}"
+            sudo pip install ${pipPkgs}
+        fi
+    fi
+
+    configureVirtualenvwrapper
 }
 
 
-function install_pip_packages {
-    echo_with_color "\nInstalling pip packages: ${PIP_PKGS}" "blue"
-    ${SUDO} pip install ${PIP_PKGS}
+function configureVirtualenvwrapper() {
+    askYesNo "configure" "virtualenvwrapper"
+    if ${shouldInstall}; then
+        notify "Configuring virtualenvwrapper"
+        if [ "$(uname -s)" == "Darwin" ]; then
+            echo "[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh" \
+                > ~/.oh-my-zsh/custom/virtualenvwrapper.zsh
+        fi
+    fi
 }
 
 
-function configure_virtualenvwrapper {
-    echo_with_color "\nConfiguring virtualenvwrapper" "blue"
-    echo "source /usr/local/bin/virtualenvwrapper.sh" > ~/.oh-my-zsh/custom/virtualenvwrapper.zsh
-}
+# Debian-based distributions
+if [ -e /usr/bin/lsb_release ]; then
+    distro=$(/usr/bin/lsb_release --codename --short)
+
+    if [ "${distro}" != "precise" -a "${distro}" != "squeeze" ]; then
+        die "unsupported distribution: ${distro}"
+    fi
+
+    aptInstall "${distro}"
+fi;
 
 
-[ -f /usr/bin/lsb_release ] && install_apt_pkgs
+# Mac OS X
+[ "$(uname -s)" == "Darwin" ] && installHomebrew && installBrews
 
-[ "$(uname -s)" == "Darwin" ] && install_homebrew
-[ -x /usr/local/bin/brew ] && install_brew_pkgs
 
-configure_vim
-configure_git
-configure_autojump
-configure_zsh
-configure_tmux
-install_pip
-install_pip_packages
-configure_virtualenvwrapper
+configureZsh
+configureTmux
+configureVim
+configureGit
+installPip
+installPipPkgs
+# TODO rvm
+# source ~/.rvm/scripts/rvm see http://stackoverflow.com/a/11105199/553994
