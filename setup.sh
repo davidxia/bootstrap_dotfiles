@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bash -c "$(curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/bootstrap_dotfiles.sh)"
+# bash -c "$(curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/setup.sh)"
 #
 #
 # Aptitude packages:
@@ -24,9 +24,9 @@
 
 
 aptitude="aptitude"
-squeezePkgs="build-essential curl exuberant-ctags git tmux vim-nox zsh"
-precisePkgs="autojump build-essential curl exuberant-ctags git tmux vim-nox zsh"
-brews="ack autojump cmatrix cowsay ctags fortune mercurial vim wget"
+squeezePkgs="build-essential cmake curl exuberant-ctags git tmux vim-nox zsh"
+precisePkgs="autojump build-essential cmake curl exuberant-ctags git tmux vim-nox zsh"
+brews="ack autojump cmake cmatrix cowsay ctags fortune ifstat libevent libmpdclient mercurial netcat tor wget xz"
 
 
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -196,6 +196,35 @@ function configureTmux() {
 }
 
 
+function installTmuxPowerline() {
+    askYesNo "install" "tmux powerline"
+    if ${shouldInstall}; then
+        backup ~/.tmux-powerline && \
+            git clone https://github.com/davidxia/tmux-powerline.git ~/.tmux-powerline && \
+            ~/.tmux-powerline/./generate_rc.sh && mv ~/.tmux-powerlinerc.default ~/.tmux-powerlinerc
+        pause "Your default tmux-powerlinerc is at ~/.tmux-powerlinerc. Edit it accordingly. \
+            See https://github.com/davidxia/tmux-powerline."
+    fi
+}
+
+
+function installTmuxPowerlineSegs() {
+    if [ -d ~/.tmux-powerline ]; then
+        askYesNo "install" "davidxia tmux-powerline theme"
+        if ${shouldInstall}; then
+            cd ~ && wget https://gist.github.com/davidxia/5271741/raw/ab29576b80154b95d07e45471a1b6a6a4bd2246b/davidxia.sh --output-document=.tmux-powerline/themes/davidxia.sh
+        fi
+
+        askYesNo "install" "tmux-mem-cpu-load"
+        if ${shouldInstall} && cmake_loc="$(which cmake)" && [ ! -z "${cmake_loc}" ]; then
+            rm -fr /tmp/tmux-mem-cpu-load && git clone https://github.com/thewtex/tmux-mem-cpu-load.git /tmp/tmux-mem-cpu-load && \
+                cd /tmp/tmux-mem-cpu-load && cmake . && make && sudo make install && \
+                rm -fr /tmp/tmux-mem-cpu-load
+        fi
+    fi
+}
+
+
 function configureVim() {
     askYesNo "configure" "vim"
     if ${shouldInstall}; then
@@ -271,8 +300,8 @@ function installPip() {
             printf "\e[0;32m"' |_|     |_|    '"\e[0m\n\n"
 
             notify "Installing python distribute and pip"
-            curl http://python-distribute.org/distribute_setup.py | sudo python
-            curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | sudo python
+            cd ~ && curl http://python-distribute.org/distribute_setup.py | sudo python && \
+                curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | sudo python
         fi
     fi
 }
@@ -323,9 +352,9 @@ fi;
 
 configureZsh
 configureTmux
+installTmuxPowerline
+installTmuxPowerlineSegs
 configureVim
 configureGit
 installPip
 installPipPkgs
-# TODO rvm
-# source ~/.rvm/scripts/rvm see http://stackoverflow.com/a/11105199/553994
