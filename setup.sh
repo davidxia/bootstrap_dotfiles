@@ -261,14 +261,25 @@ function configureGit() {
             ln -s ~/.git-config/gitconfig ~/.gitconfig && \
             ln -s ~/.git-config/gitignore_global ~/.gitignore_global
 
-        ask "Setting up git config\nWhat's your name?"
+        notify "Setting up git config\n"
+        notify "Initializing git hooks in ~/.git_template\n"
+        git config --global init.templatedir '~/.git_template'
+        mkdir -p ~/.git_template/hooks
+        curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/git_template/hooks/ctags > ~/.git_template/hooks/ctags
+        curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/git_template/hooks/post-commit > ~/.git_template/hooks/post-commit
+        curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/git_template/hooks/post-merge > ~/.git_template/hooks/post-merge
+        curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/git_template/hooks/post-checkout > ~/.git_template/hooks/post-checkout
+        curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/git_template/hooks/post-rewrite > ~/.git_template/hooks/post-rewrite
+        chmod u+x ~/.git_template/hooks/*
+        git config --global alias.ctags '!.git/hooks/ctags'
+        ask "What's your name?"
         read git_name
         git config --global user.name "${git_name}"
         ask "What's your email?"
         read git_email
         git config --global user.email "${git_email}"
         git config --list
-        pause "Here's your global git config. You can edit this later anytime. Press [Enter] key to continue."
+        pause "\nHere's your global git config. You can edit this later anytime. Press [Enter] key to continue.\n"
     fi
 }
 
