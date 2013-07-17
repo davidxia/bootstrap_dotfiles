@@ -100,8 +100,8 @@ install_brew_pkgs() {
 
 
 configure_zsh() {
-    echo_with_color "Making zsh default shell and cloning David Xia's oh-my-zsh\n" "blue"
-    curl -L https://github.com/davidxia/oh-my-zsh/raw/master/tools/install.sh | sh
+    echo_with_color "Making zsh default shell and cloning Adam Smith's oh-my-zsh\n" "blue"
+    curl -L https://github.com/tranzfuse/oh-my-zsh/raw/master/tools/install.sh | sh
     /bin/zsh && source ~/.zshrc
 }
 
@@ -112,8 +112,8 @@ configure_vim() {
         echo_with_color "~/.vim directory already exists. Moving to ~/.vim.bak" "blue"
         rm -fr ~/.vim.bak && mv ~/.vim ~/.vim.bak
     fi
-    echo_with_color "Cloning David Xia's vim-config and installing Vundle as submodule\n" "blue"
-    git clone https://github.com/davidxia/vim-config.git ~/.vim
+    echo_with_color "Cloning Adam Smith's vim-config and installing Vundle as submodule\n" "blue"
+    git clone https://github.com/tranzfuse/vim-config.git ~/.vim
     cd ~/.vim && git submodule update --init bundle/vundle && cd ~
     # TODO Need to run this script twice because of chicken-egg with vim and bundles
     vim +BundleInstall +qall
