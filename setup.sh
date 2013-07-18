@@ -4,7 +4,6 @@
 #
 #
 # Aptitude packages:
-# autojump - fast directory navigation
 # build-essential - for GCC, GNU Make, etc.
 # curl - obviously
 # exuberant-ctags - for Vim Tagbar
@@ -25,8 +24,8 @@
 
 aptitude="aptitude"
 squeezePkgs="build-essential cmake curl exuberant-ctags git tmux vim-nox zsh"
-precisePkgs="autojump build-essential cmake curl exuberant-ctags git tmux vim-nox zsh"
-brews="ack autojump cmake cmatrix cowsay ctags fortune ifstat libevent libmpdclient mercurial netcat tor wget xz"
+precisePkgs="build-essential cmake curl exuberant-ctags git tmux vim-nox zsh"
+brews="ack cmake cmatrix cowsay ctags fortune ifstat libevent libmpdclient mercurial netcat tor wget xz"
 
 
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -115,8 +114,6 @@ function aptInstall() {
             mkdir ~/.fonts && git clone https://github.com/scotu/ubuntu-mono-powerline.git ~/.fonts/
         fi
     fi
-
-    configureAutojump
 }
 
 
@@ -157,8 +154,6 @@ function installBrews() {
                 brew install ${missingBrews}
             fi
         fi
-
-        configureAutojump
     else
         error "${brewLoc} is not executable"
     fi
@@ -280,18 +275,6 @@ function configureGit() {
         git config --global user.email "${git_email}"
         git config --list
         pause "\nHere's your global git config. You can edit this later anytime. Press [Enter] key to continue.\n"
-    fi
-}
-
-
-function configureAutojump() {
-    askYesNo "configure" "autojump"
-    if ${shouldInstall}; then
-        notify "Configuring autojump"
-        if [ "$(uname -s)" == "Darwin" ]; then
-            echo "[ -f $(brew --prefix)/etc/autojump ] && . $(brew --prefix)/etc/autojump" \
-                > ~/.oh-my-zsh/custom/autojump.zsh
-        fi
     fi
 }
 
