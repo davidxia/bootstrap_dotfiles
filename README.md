@@ -3,4 +3,4 @@ zsh, vim, git, etc.
 
 # Main Boostrap Script
 
-    bash -c "$(curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/setup.sh)"
+    bash -c "$(curl -fsSL https://raw.github.com/tranzfuse/bootstrap_dotfiles/master/setup.sh)"
