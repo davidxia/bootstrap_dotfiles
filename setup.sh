@@ -169,7 +169,7 @@ function configureZsh() {
     askYesNo "install" "oh-my-zsh"
     if ${shouldInstall}; then
         notify "Installing oh-my-zsh!"
-        bash -c "$(curl -fsSL https://github.com/davidxia/oh-my-zsh/raw/master/tools/install.sh)"
+        bash -c "$(curl -fsSL https://github.com/tranzfuse/oh-my-zsh/raw/master/tools/install.sh)"
     fi
 }
 
@@ -231,7 +231,7 @@ function configureVim() {
         backup ~/.vim ~/.vimrc
 
         notify "Cloning David Xia's Vim config and symlinking ~/.vimrc -> ~/.vim/vimrc"
-        git clone https://github.com/davidxia/vim-config.git ~/.vim && \
+        git clone https://github.com/tranzfuse/vim-config.git ~/.vim && \
             cd ~/.vim && git submodule update --init bundle/vundle && cd ~ && \
             vim -u ~/.vim/bundles.vim +BundleInstall +qall && ln -s ~/.vim/vimrc ~/.vimrc
     fi
@@ -257,7 +257,7 @@ function configureGit() {
         notify "Symlinking ~/.gitconfig -> ~/.git-config/gitconfig"
         notify "Symlinking ~/.gitignore_global -> ~/.git-config/gitignore_global"
 
-        git clone https://github.com/davidxia/git-config.git ~/.git-config && \
+        git clone https://github.com/tranzfuse/git-config.git ~/.git-config && \
             ln -s ~/.git-config/gitconfig ~/.gitconfig && \
             ln -s ~/.git-config/gitignore_global ~/.gitignore_global
 
