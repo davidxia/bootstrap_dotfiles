@@ -197,8 +197,7 @@ function installTmuxPowerline() {
         backup ~/.tmux-powerline && \
             git clone https://github.com/davidxia/tmux-powerline.git ~/.tmux-powerline && \
             ~/.tmux-powerline/./generate_rc.sh && mv ~/.tmux-powerlinerc.default ~/.tmux-powerlinerc
-        pause "Your default tmux-powerlinerc is at ~/.tmux-powerlinerc. Edit it accordingly. \
-            See https://github.com/davidxia/tmux-powerline."
+        pause "Your default tmux-powerlinerc is at ~/.tmux-powerlinerc. Edit it accordingly. See https://github.com/davidxia/tmux-powerline."
     fi
 }
 
@@ -226,7 +225,7 @@ function configureVim() {
         backup ~/.vim ~/.vimrc
 
         notify "Cloning David Xia's Vim config and symlinking ~/.vimrc -> ~/.vim/vimrc"
-        git clone https://github.com/davidxia/vim-config.git ~/.vim && \
+        cd ~ && git clone https://github.com/davidxia/vim-config.git ~/.vim && \
             cd ~/.vim && git submodule update --init bundle/vundle && cd ~ && \
             vim -u ~/.vim/bundles.vim +BundleInstall +qall && ln -s ~/.vim/vimrc ~/.vimrc
     fi
@@ -274,7 +273,7 @@ function configureGit() {
         read git_email
         git config --global user.email "${git_email}"
         git config --list
-        pause "\nHere's your global git config. You can edit this later anytime. Press [Enter] key to continue.\n"
+        pause "Here's your global git config. You can edit this later anytime. Press [Enter] key to continue."
     fi
 }
 
@@ -296,6 +295,7 @@ function installPip() {
             notify "Installing python distribute and pip"
             cd ~ && curl http://python-distribute.org/distribute_setup.py | sudo python && \
                 curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | sudo python
+            cd ~ && rm distribute-*.tar.gz
         fi
     fi
 }
