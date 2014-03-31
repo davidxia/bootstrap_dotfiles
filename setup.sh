@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bash -c "$(curl -fsSL https://raw.github.com/davidxia/bootstrap_dotfiles/master/setup.sh)"
+# bash -c "$(curl -fsSL https://raw.github.com/tranzfuse/bootstrap_dotfiles/master/setup.sh)"
 #
 #
 # Aptitude packages:
@@ -230,7 +230,7 @@ function configureVim() {
     if ${shouldInstall}; then
         backup ~/.vim ~/.vimrc
 
-        notify "Cloning David Xia's Vim config and symlinking ~/.vimrc -> ~/.vim/vimrc"
+        notify "Cloning Adam Smith's Vim config and symlinking ~/.vimrc -> ~/.vim/vimrc"
         git clone https://github.com/tranzfuse/vim-config.git ~/.vim && \
             cd ~/.vim && git submodule update --init bundle/vundle && cd ~ && \
             vim -u ~/.vim/bundles.vim +BundleInstall +qall && ln -s ~/.vim/vimrc ~/.vimrc
