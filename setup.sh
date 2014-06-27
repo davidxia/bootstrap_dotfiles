@@ -295,56 +295,6 @@ function configureAutojump() {
     fi
 }
 
-
-function installPip() {
-    if ! pip_loc="$(which pip)" || [ -z "${pip_loc}" ]; then
-        askYesNo "install" "python distribute and pip"
-        if ${shouldInstall}; then
-            printf "\n"
-            printf "\e[0;32m"'        _       '"\e[0m\n"
-            printf "\e[0;32m"'       (_)      '"\e[0m\n"
-            printf "\e[0;32m"'  _ __  _ _ __  '"\e[0m\n"
-            printf "\e[0;32m"' | |_ \| | |_ \ '"\e[0m\n"
-            printf "\e[0;32m"' | |_) | | |_) |'"\e[0m\n"
-            printf "\e[0;32m"' | .__/|_| .__/ '"\e[0m\n"
-            printf "\e[0;32m"' | |     | |    '"\e[0m\n"
-            printf "\e[0;32m"' |_|     |_|    '"\e[0m\n\n"
-
-            notify "Installing python distribute and pip"
-            cd ~ && curl http://python-distribute.org/distribute_setup.py | sudo python && \
-                curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | sudo python
-        fi
-    fi
-}
-
-
-function installPipPkgs() {
-    pipPkgs="ipython virtualenv virtualenvwrapper"
-
-    askYesNo "install" "pip packages: ${pipPkgs}"
-    if ${shouldInstall}; then
-        if pipLoc="$(which pip)" && [ ! -z "${pipLoc}" ]; then
-            notify "Installing pip packages: ${pipPkgs}"
-            sudo pip install ${pipPkgs}
-        fi
-    fi
-
-    configureVirtualenvwrapper
-}
-
-
-function configureVirtualenvwrapper() {
-    askYesNo "configure" "virtualenvwrapper"
-    if ${shouldInstall}; then
-        notify "Configuring virtualenvwrapper"
-        if [ "$(uname -s)" == "Darwin" ]; then
-            echo "[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh" \
-                > ~/.oh-my-zsh/custom/virtualenvwrapper.zsh
-        fi
-    fi
-}
-
-
 # Debian-based distributions
 if [ -e /usr/bin/lsb_release ]; then
     distro=$(/usr/bin/lsb_release --codename --short)
@@ -367,5 +317,3 @@ installTmuxPowerline
 installTmuxPowerlineSegs
 configureVim
 configureGit
-installPip
-installPipPkgs
