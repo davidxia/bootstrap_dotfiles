@@ -328,11 +328,11 @@ function configureVirtualenvwrapper() {
 }
 
 
-# Debian-based distributions
+# Debian or Ubuntu based distributions
 if [ -e /usr/bin/lsb_release ]; then
     distro=$(/usr/bin/lsb_release --codename --short)
 
-    if [ "${distro}" != "precise" -a "${distro}" != "squeeze" ]; then
+    if [ "${distro}" != "precise" -a "${distro}" != "squeeze" -a "${distro}" != "trusty" ]; then
         die "unsupported distribution: ${distro}"
     fi
 
